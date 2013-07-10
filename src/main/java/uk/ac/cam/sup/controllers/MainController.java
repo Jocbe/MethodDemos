@@ -2,19 +2,27 @@ package uk.ac.cam.sup.controllers;
 
 import java.util.List;
 import java.util.Map;
+
 import com.google.common.collect.ImmutableMap;
 import com.googlecode.htmleasy.ViewWith;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+
 import uk.ac.cam.sup.models.DemoModel;
+
 
 // Import the following for logging
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 // Import the following for hibernate requests
 import uk.ac.cam.sup.HibernateSessionRequestFilter;
+import uk.ac.cam.sup.LDAPProvider;
+
 import org.hibernate.Session;
+
 
 // Import the following for raven AND hibernate
 import javax.ws.rs.core.Context;
@@ -43,9 +51,9 @@ public class MainController {
 	@GET
 	@Path("/")
 	@ViewWith("/soy/main.index")
-	public Map demo() {
+	public Map<String, ?> demo() {
 		// See the hibernateDemo()-method for how to use hibernate
-		List allDemoModels = hibernateDemo(); 
+		List<?> allDemoModels = hibernateDemo(); 
 		
 		// See the logDemo()-method for how to log stuff
 		logDemo();
@@ -60,11 +68,15 @@ public class MainController {
 		 */
 		String CRSID = ravenDemo();
 		
+		/*
+		 * Demo of getting data via LDAP
+		 */
+		String uName = LDAPProvider.getData(CRSID, "cn");
 		
-		return ImmutableMap.of("userID", CRSID, "data", allDemoModels);
+		return ImmutableMap.of("userID", CRSID, "userName", uName, "data", allDemoModels);
 	}
 
-	public List hibernateDemo() {
+	public List<?> hibernateDemo() {
 		// This will store some data in the database first.
 		
 		// Get the session for all db transfers by passing the current request to the
@@ -80,7 +92,7 @@ public class MainController {
 		// To retrieve data from the db with hibernate you do the same as always.
 		s = HibernateSessionRequestFilter.openSession(request);
 		s.beginTransaction();
-		List result = s.createQuery("from DemoModel").list();
+		List<?> result = s.createQuery("from DemoModel").list();
 		s.getTransaction().commit();
 		s.close();
 		
